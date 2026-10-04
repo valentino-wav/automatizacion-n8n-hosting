@@ -111,8 +111,3 @@ Estados de un ticket: `Pendiente` → `Procesado por IA` → `Aprobado por Human
 ![Errores](capturas/11_airtable_errores.png)
 ![Clientes](capturas/12_airtable_clientes.png)
 
-## Cómo importar el flujo
-
-1. En n8n: **Create workflow → ⋯ → Import from file** y elegir `workflow_ecosistema_ia.json`.
-2. Conectar las credenciales propias de Gmail, Airtable y Anthropic.
-3. Cambiar `soporte@fennec-demo.com` y `aprobador@fennec-demo.com` por casillas reales.

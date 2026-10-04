@@ -1,0 +1,2202 @@
+{
+  "name": "Entrega - Ecosistema de Automatización IA",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "maxResults": 5,
+        "filters": {
+          "q": "in:inbox -from:soporte@fennec-demo.com -from:mailer-daemon -from:noreply",
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "id": "e2f997b0-2d13-4aa4-b88e-65ad5fa198fc",
+      "name": "Nuevo Mail de Soporte",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        464
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "A8RsWsAyyIOjYfyq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "n1",
+              "name": "gmailMessageId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "n2",
+              "name": "gmailThreadId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "n3",
+              "name": "emailRemitente",
+              "value": "={{ ($json.from?.value?.[0]?.address || '').toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "n4",
+              "name": "nombreRemitente",
+              "value": "={{ $json.from?.value?.[0]?.name || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "n5",
+              "name": "asunto",
+              "value": "={{ ($json.subject || '').trim() || '(Sin asunto)' }}",
+              "type": "string"
+            },
+            {
+              "id": "n6",
+              "name": "mensaje",
+              "value": "={{ ($json.text || '').replace(/\\r/g, '').split(/\\n(El|On) [^\\n]+(escribió|wrote):/)[0].trim().slice(0, 4000) }}",
+              "type": "string"
+            },
+            {
+              "id": "n7",
+              "name": "fechaRecepcion",
+              "value": "={{ $json.date || $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e92f7a0c-4b3e-48fb-9508-911163d3068c",
+      "name": "Normalizar Datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.emailRemitente }}",
+              "rightValue": "soporte@fennec-demo.com",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "f2",
+              "leftValue": "={{ $json.emailRemitente }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "edabb913-ebc4-4016-a460-599ee4644fe4",
+      "name": "Anti-bucle: Excluir Casilla Propia",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "filterByFormula": "={GmailMessageID} = '{{ $json.gmailMessageId }}'",
+        "returnAll": false,
+        "limit": 1,
+        "options": {
+          "fields": [
+            "GmailMessageID"
+          ]
+        }
+      },
+      "id": "61dd08f3-159c-4b60-aa87-f97961fc33fc",
+      "name": "Buscar Ticket Existente",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        464
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "i1",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9fc586e4-7ac7-48d1-8141-24e7726aaa74",
+      "name": "¿Es Ticket Nuevo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblnOYDXWHMw6OFeP",
+          "cachedResultName": "Clientes"
+        },
+        "filterByFormula": "=LOWER({Email}) = '{{ $('Normalizar Datos').item.json.emailRemitente }}'",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "id": "691a1244-5b57-49e5-84a0-430d71f007c1",
+      "name": "Buscar Cliente por Email",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        368
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "value": {
+            "Asunto": "={{ $('Normalizar Datos').item.json.asunto }}",
+            "EmailRemitente": "={{ $('Normalizar Datos').item.json.emailRemitente }}",
+            "MensajeOriginal": "={{ $('Normalizar Datos').item.json.mensaje }}",
+            "GmailMessageID": "={{ $('Normalizar Datos').item.json.gmailMessageId }}",
+            "GmailThreadID": "={{ $('Normalizar Datos').item.json.gmailThreadId }}",
+            "Estado": "Pendiente",
+            "FechaRecepcion": "={{ $('Normalizar Datos').item.json.fechaRecepcion }}",
+            "Cliente": "={{ $json.id ? [$json.id] : [] }}"
+          },
+          "schema": [
+            {
+              "id": "Asunto",
+              "displayName": "Asunto",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "EmailRemitente",
+              "displayName": "EmailRemitente",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MensajeOriginal",
+              "displayName": "MensajeOriginal",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "GmailMessageID",
+              "displayName": "GmailMessageID",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "GmailThreadID",
+              "displayName": "GmailThreadID",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Estado",
+              "id": "Estado",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesado por IA",
+                  "value": "Procesado por IA"
+                },
+                {
+                  "name": "Aprobado por Humano",
+                  "value": "Aprobado por Humano"
+                },
+                {
+                  "name": "Rechazado",
+                  "value": "Rechazado"
+                },
+                {
+                  "name": "Respondido",
+                  "value": "Respondido"
+                },
+                {
+                  "name": "Error IA",
+                  "value": "Error IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "FechaRecepcion",
+              "displayName": "FechaRecepcion",
+              "type": "dateTime",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "type": "array",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "typecast": false
+        }
+      },
+      "id": "5ee7c5f7-9068-4309-8348-6fe641623e75",
+      "name": "Crear Ticket (Pendiente)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        368
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Normalizar Datos').item.json.gmailMessageId }}"
+      },
+      "id": "6ecf57f8-4023-4bd4-b6c7-c3ae470bbede",
+      "name": "Marcar Mail como Leído",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        272
+      ],
+      "webhookId": "1d62e122-64cb-43b8-92be-5690d076c9e3",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "A8RsWsAyyIOjYfyq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Normalizar Datos').item.json.gmailMessageId }}"
+      },
+      "id": "2c8a68e7-dcfd-459c-bc00-9589c8224d76",
+      "name": "Marcar Leído (Duplicado)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        560
+      ],
+      "webhookId": "1fe5bbf3-6131-441b-853b-97827baf2658",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "A8RsWsAyyIOjYfyq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $('Normalizar Datos').item.json.mensaje.length }}",
+              "rightValue": 15,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "245b02e3-08ee-4340-ace5-877d7dce01b0",
+      "name": "¿Datos Completos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "claude-haiku-4-5-20251001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Clasificá el siguiente ticket de soporte.\n\nDATOS DEL CLIENTE\n- Nombre: {{ ($('Buscar Cliente por Email').item.json.fields?.Nombre || $('Normalizar Datos').item.json.nombreRemitente || 'Desconocido').trim() }}\n- Empresa: {{ ($('Buscar Cliente por Email').item.json.fields?.Empresa || 'No registrada').trim() }}\n- Plan: {{ $('Buscar Cliente por Email').item.json.fields?.Plan || 'No es cliente registrado' }}\n- Cliente registrado: {{ $('Buscar Cliente por Email').item.json.id ? 'Sí' : 'No' }}\n- Email: {{ $('Normalizar Datos').item.json.emailRemitente }}\n\nMAIL RECIBIDO\nAsunto: {{ $('Normalizar Datos').item.json.asunto }}\nMensaje:\n\"\"\"\n{{ $('Normalizar Datos').item.json.mensaje }}\n\"\"\"\n\nRespondé SOLO con un objeto JSON válido, sin texto adicional ni bloques de código, con esta forma exacta:\n{\"categoria\": \"Facturacion | Tecnico | Cuenta y Acceso | Comercial | Otro\", \"prioridad\": 1, \"sentimiento\": \"Positivo | Neutral | Negativo\", \"resumen\": \"una oración\", \"borrador\": \"respuesta completa al cliente\", \"razonamiento\": \"por qué elegiste categoría y prioridad\"}"
+            }
+          ]
+        },
+        "options": {
+          "system": "Sos el analista de soporte de Fennec, un SaaS de hosting web. Tu tarea es clasificar tickets y redactar un borrador de respuesta que un humano va a revisar antes de enviar.\n\nReglas de prioridad (entero de 1 a 5):\n5 = servicio caído, pérdida de ventas o cobros erróneos.\n4 = cliente bloqueado sin poder operar (acceso, panel, mails).\n3 = problema técnico con solución alternativa.\n2 = consultas comerciales o de configuración.\n1 = agradecimientos o mensajes sin acción requerida.\n\nSi el plan es Enterprise, sumá 1 (máximo 5).\nLa prioridad depende solo del problema descrito. No la bajes porque el cliente no esté registrado ni por falta de datos.\n\nReglas del borrador:\n- Español neutro, tono cordial y profesional, tuteo.\n- Saludá por el nombre si lo conocés.\n- No prometas reintegros, plazos exactos ni acciones que no puedas verificar: decí que el equipo lo está revisando.\n- Máximo 120 palabras.\n- Firmá como: Equipo de Soporte - Fennec.",
+          "maxTokens": 600,
+          "temperature": 0.2
+        }
+      },
+      "id": "655a0f88-3e90-4481-bf26-86bb29a64968",
+      "name": "Claude: Clasificar Ticket",
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        352
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const j = $json;\nconst raw = j.merged_response || (Array.isArray(j.content) ? j.content.filter(c => c.type === 'text').map(c => c.text).join('') : '') || j.text || j.output || '';\nconst limpio = String(raw).replace(/```json|```/g, '').trim();\nconst ini = limpio.indexOf('{');\nconst fin = limpio.lastIndexOf('}');\nif (ini === -1 || fin === -1) throw new Error('La IA no devolvió JSON completo. Respuesta recibida: ' + limpio.slice(0, 300).replace(/\\s+/g, ' '));\nconst r = JSON.parse(limpio.slice(ini, fin + 1));\nconst categorias = ['Facturacion', 'Tecnico', 'Cuenta y Acceso', 'Comercial', 'Otro'];\nconst sentimientos = ['Positivo', 'Neutral', 'Negativo'];\nconst prioridad = Math.min(5, Math.max(1, parseInt(r.prioridad, 10) || 3));\nif (!r.borrador || String(r.borrador).trim().length < 10) throw new Error('La IA devolvió un borrador vacío.');\nreturn { json: {\n  categoria: categorias.includes(r.categoria) ? r.categoria : 'Otro',\n  prioridad,\n  sentimiento: sentimientos.includes(r.sentimiento) ? r.sentimiento : 'Neutral',\n  resumen: String(r.resumen || '').trim(),\n  borrador: String(r.borrador).trim(),\n  razonamiento: String(r.razonamiento || '').trim()\n} };"
+      },
+      "id": "414a1e99-a1a5-46b8-be74-0b5de462125a",
+      "name": "Parsear Respuesta IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        192
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+            "Estado": "Procesado por IA",
+            "Categoria": "={{ $json.categoria }}",
+            "Prioridad": "={{ $json.prioridad }}",
+            "Sentimiento": "={{ $json.sentimiento }}",
+            "ResumenIA": "={{ $json.resumen }}",
+            "BorradorRespuesta": "={{ $json.borrador }}"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "type": "string",
+              "readOnly": true,
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Estado",
+              "id": "Estado",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesado por IA",
+                  "value": "Procesado por IA"
+                },
+                {
+                  "name": "Aprobado por Humano",
+                  "value": "Aprobado por Humano"
+                },
+                {
+                  "name": "Rechazado",
+                  "value": "Rechazado"
+                },
+                {
+                  "name": "Respondido",
+                  "value": "Respondido"
+                },
+                {
+                  "name": "Error IA",
+                  "value": "Error IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Categoria",
+              "id": "Categoria",
+              "options": [
+                {
+                  "name": "Facturacion",
+                  "value": "Facturacion"
+                },
+                {
+                  "name": "Tecnico",
+                  "value": "Tecnico"
+                },
+                {
+                  "name": "Cuenta y Acceso",
+                  "value": "Cuenta y Acceso"
+                },
+                {
+                  "name": "Comercial",
+                  "value": "Comercial"
+                },
+                {
+                  "name": "Otro",
+                  "value": "Otro"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "Prioridad",
+              "displayName": "Prioridad",
+              "type": "number",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Sentimiento",
+              "id": "Sentimiento",
+              "options": [
+                {
+                  "name": "Positivo",
+                  "value": "Positivo"
+                },
+                {
+                  "name": "Neutral",
+                  "value": "Neutral"
+                },
+                {
+                  "name": "Negativo",
+                  "value": "Negativo"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "ResumenIA",
+              "displayName": "ResumenIA",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "BorradorRespuesta",
+              "displayName": "BorradorRespuesta",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cf75184b-c589-4120-9c54-01844a507e01",
+      "name": "Ticket: Procesado por IA",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        -80
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "h1",
+              "leftValue": "={{ $('Parsear Respuesta IA').item.json.prioridad }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "98699ed5-fc9b-4579-b0e5-a59e9b6d76e6",
+      "name": "¿Prioridad Alta? (≥ 4)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2432,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "u1",
+              "name": "etiqueta",
+              "value": "🔴 URGENTE",
+              "type": "string"
+            },
+            {
+              "id": "u2",
+              "name": "plazo",
+              "value": "Responder en menos de 2 horas",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8bb4778b-e6b5-41cd-b268-78a5dede831b",
+      "name": "Marcar Urgente",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "aprobador@fennec-demo.com",
+        "subject": "=[{{ $json.etiqueta }}] Aprobación requerida - Ticket #{{ $('Ticket: Procesado por IA').item.json.fields.TicketID }}: {{ $('Normalizar Datos').item.json.asunto }}",
+        "message": "=<h3>Nuevo ticket clasificado por IA - {{ $json.etiqueta }}</h3><p><b>Plazo:</b> {{ $json.plazo }}</p><p><b>Cliente:</b> {{ ($('Buscar Cliente por Email').item.json.fields?.Nombre || $('Normalizar Datos').item.json.nombreRemitente || 'No registrado').trim() }} ({{ $('Normalizar Datos').item.json.emailRemitente }})<br><b>Empresa:</b> {{ ($('Buscar Cliente por Email').item.json.fields?.Empresa || '-').trim() }} | <b>Plan:</b> {{ $('Buscar Cliente por Email').item.json.fields?.Plan || 'No es cliente registrado' }}</p><p><b>Categoría:</b> {{ $('Parsear Respuesta IA').item.json.categoria }} | <b>Prioridad:</b> {{ $('Parsear Respuesta IA').item.json.prioridad }}/5 | <b>Sentimiento:</b> {{ $('Parsear Respuesta IA').item.json.sentimiento }}</p><p><b>Resumen IA:</b> {{ $('Parsear Respuesta IA').item.json.resumen }}</p><hr><p><b>Mensaje original:</b><br>{{ $('Normalizar Datos').item.json.mensaje.replace(/\\n/g, '<br>') }}</p><hr><p><b>Borrador que se enviará al cliente:</b><br>{{ $('Parsear Respuesta IA').item.json.borrador.replace(/\\n/g, '<br>') }}</p><hr><p><i>Razonamiento de la IA: {{ $('Parsear Respuesta IA').item.json.razonamiento }}</i></p>",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Aprobar y enviar",
+            "disapproveLabel": "Rechazar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 24
+            }
+          },
+          "appendAttribution": false
+        }
+      },
+      "id": "82adc2f6-3c11-4a4d-a17d-66e12aa1524e",
+      "name": "Solicitar Aprobación Humana",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2896,
+        -80
+      ],
+      "webhookId": "d9a6e65f-4bd2-4bc1-a03d-ba9381cfcf0e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "A8RsWsAyyIOjYfyq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m1",
+              "name": "etiqueta",
+              "value": "🟢 Normal",
+              "type": "string"
+            },
+            {
+              "id": "m2",
+              "name": "plazo",
+              "value": "Responder en menos de 24 horas",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4bdef776-b685-4ff5-89b6-c7ad5cf05299",
+      "name": "Marcar Normal",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "descripcion",
+              "value": "Mail sin contenido suficiente",
+              "type": "string"
+            },
+            {
+              "id": "e2",
+              "name": "tipo",
+              "value": "Datos Incompletos",
+              "type": "string"
+            },
+            {
+              "id": "e3",
+              "name": "nodo",
+              "value": "¿Datos Completos?",
+              "type": "string"
+            },
+            {
+              "id": "e4",
+              "name": "mensajeError",
+              "value": "=El mail llegó vacío o con menos de 15 caracteres ({{ $('Normalizar Datos').item.json.mensaje.length }}). No se envía a la IA para no gastar tokens.",
+              "type": "string"
+            },
+            {
+              "id": "e5",
+              "name": "ticketRecordId",
+              "value": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d389d0cb-deba-44c7-b58d-1ed728883515",
+      "name": "Error: Datos Incompletos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3808,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblEpgq3vJtpwLUSL",
+          "cachedResultName": "Errores"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "value": {
+            "Descripcion": "={{ $json.descripcion }}",
+            "Tipo": "={{ $json.tipo }}",
+            "Nodo": "={{ $json.nodo }}",
+            "MensajeError": "={{ $json.mensajeError }}",
+            "Workflow": "Entrega - Ecosistema de Automatización IA",
+            "Fecha": "={{ $now.toISO() }}",
+            "Resuelto": false,
+            "Ticket": "={{ $json.ticketRecordId ? [$json.ticketRecordId] : [] }}"
+          },
+          "schema": [
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Tipo",
+              "id": "Tipo",
+              "options": [
+                {
+                  "name": "API IA",
+                  "value": "API IA"
+                },
+                {
+                  "name": "Datos Incompletos",
+                  "value": "Datos Incompletos"
+                },
+                {
+                  "name": "Envio",
+                  "value": "Envio"
+                },
+                {
+                  "name": "Otro",
+                  "value": "Otro"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MensajeError",
+              "displayName": "MensajeError",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Workflow",
+              "id": "Workflow",
+              "options": [
+                {
+                  "name": "Entrega - Ecosistema de Automatización IA",
+                  "value": "Entrega - Ecosistema de Automatización IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "type": "dateTime",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resuelto",
+              "displayName": "Resuelto",
+              "type": "boolean",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ticket",
+              "displayName": "Ticket",
+              "type": "array",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "9d560885-42a1-441c-9c7d-1413fae8c364",
+      "name": "Registrar Error en Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        4032,
+        560
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "ap1",
+              "leftValue": "={{ $json.data?.approved === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b70fb71f-1680-46a3-ad6e-869b861862dd",
+      "name": "¿Aprobado por Humano?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3104,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+            "Estado": "Aprobado por Humano"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "type": "string",
+              "readOnly": true,
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Estado",
+              "id": "Estado",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesado por IA",
+                  "value": "Procesado por IA"
+                },
+                {
+                  "name": "Aprobado por Humano",
+                  "value": "Aprobado por Humano"
+                },
+                {
+                  "name": "Rechazado",
+                  "value": "Rechazado"
+                },
+                {
+                  "name": "Respondido",
+                  "value": "Respondido"
+                },
+                {
+                  "name": "Error IA",
+                  "value": "Error IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "04a60c49-00d4-40d9-902f-0fd824b489ef",
+      "name": "Ticket: Aprobado por Humano",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3328,
+        -192
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Normalizar Datos').item.json.gmailMessageId }}",
+        "emailType": "text",
+        "message": "={{ $('Parsear Respuesta IA').item.json.borrador }}",
+        "options": {
+          "appendAttribution": false,
+          "replyToSenderOnly": true
+        }
+      },
+      "id": "84899e08-fe31-42c7-a1f7-c474b4ad5740",
+      "name": "Responder al Cliente (mismo hilo)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        -64
+      ],
+      "webhookId": "47ca7b15-b90c-4599-b8fd-66f7524db00c",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "A8RsWsAyyIOjYfyq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+            "Estado": "Respondido",
+            "FechaRespuesta": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "type": "string",
+              "readOnly": true,
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Estado",
+              "id": "Estado",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesado por IA",
+                  "value": "Procesado por IA"
+                },
+                {
+                  "name": "Aprobado por Humano",
+                  "value": "Aprobado por Humano"
+                },
+                {
+                  "name": "Rechazado",
+                  "value": "Rechazado"
+                },
+                {
+                  "name": "Respondido",
+                  "value": "Respondido"
+                },
+                {
+                  "name": "Error IA",
+                  "value": "Error IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "FechaRespuesta",
+              "displayName": "FechaRespuesta",
+              "type": "dateTime",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4af4b187-2e23-4d62-9d81-04a059477406",
+      "name": "Ticket: Respondido",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3792,
+        -80
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+            "Estado": "Rechazado",
+            "FeedbackHumano": "={{ $json.data?.approved === false ? 'Borrador rechazado por el aprobador' : 'Sin respuesta del aprobador en 24 h (timeout)' }} - {{ $now.setZone('America/Argentina/Buenos_Aires').toFormat('dd/MM/yyyy HH:mm') }}. Requiere respuesta manual."
+          },
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "type": "string",
+              "readOnly": true,
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Estado",
+              "id": "Estado",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesado por IA",
+                  "value": "Procesado por IA"
+                },
+                {
+                  "name": "Aprobado por Humano",
+                  "value": "Aprobado por Humano"
+                },
+                {
+                  "name": "Rechazado",
+                  "value": "Rechazado"
+                },
+                {
+                  "name": "Respondido",
+                  "value": "Respondido"
+                },
+                {
+                  "name": "Error IA",
+                  "value": "Error IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "FeedbackHumano",
+              "displayName": "FeedbackHumano",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ce2051de-4ac4-4f8e-975c-df59a6544c56",
+      "name": "Ticket: Rechazado",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3328,
+        32
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "descripcion",
+              "value": "Fallo en la API de Claude",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "tipo",
+              "value": "API IA",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "nodo",
+              "value": "Claude: Clasificar Ticket",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "mensajeError",
+              "value": "={{ typeof $json.error === 'string' ? $json.error : ($json.error?.message || JSON.stringify($json.error || $json)) }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "ticketRecordId",
+              "value": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9ab3d0f0-2004-43c4-99e8-b8cdad36d594",
+      "name": "Error: API de IA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3808,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "descripcion",
+              "value": "Respuesta de la IA con formato inválido",
+              "type": "string"
+            },
+            {
+              "id": "p2",
+              "name": "tipo",
+              "value": "API IA",
+              "type": "string"
+            },
+            {
+              "id": "p3",
+              "name": "nodo",
+              "value": "Parsear Respuesta IA",
+              "type": "string"
+            },
+            {
+              "id": "p4",
+              "name": "mensajeError",
+              "value": "={{ typeof $json.error === 'string' ? $json.error : ($json.error?.message || JSON.stringify($json.error || $json)) }}",
+              "type": "string"
+            },
+            {
+              "id": "p5",
+              "name": "ticketRecordId",
+              "value": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aa05477d-fed4-42f2-94b7-80bc8179ba5c",
+      "name": "Error: Respuesta IA Inválida",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3808,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "descripcion",
+              "value": "Fallo al enviar la respuesta al cliente",
+              "type": "string"
+            },
+            {
+              "id": "s2",
+              "name": "tipo",
+              "value": "Envio",
+              "type": "string"
+            },
+            {
+              "id": "s3",
+              "name": "nodo",
+              "value": "Responder al Cliente (mismo hilo)",
+              "type": "string"
+            },
+            {
+              "id": "s4",
+              "name": "mensajeError",
+              "value": "={{ typeof $json.error === 'string' ? $json.error : ($json.error?.message || JSON.stringify($json.error || $json)) }}",
+              "type": "string"
+            },
+            {
+              "id": "s5",
+              "name": "ticketRecordId",
+              "value": "={{ $('Crear Ticket (Pendiente)').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bf526e1d-5fab-4f3b-94ea-97bd06cf25bf",
+      "name": "Error: Envío Gmail",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3808,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblaGl3zZ53jSihPP",
+          "cachedResultName": "Tickets"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.fields.Ticket[0] }}",
+            "Estado": "={{ $json.fields.Tipo === 'Envio' ? 'Aprobado por Humano' : 'Error IA' }}"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "type": "string",
+              "readOnly": true,
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Estado",
+              "id": "Estado",
+              "options": [
+                {
+                  "name": "Pendiente",
+                  "value": "Pendiente"
+                },
+                {
+                  "name": "Procesado por IA",
+                  "value": "Procesado por IA"
+                },
+                {
+                  "name": "Aprobado por Humano",
+                  "value": "Aprobado por Humano"
+                },
+                {
+                  "name": "Rechazado",
+                  "value": "Rechazado"
+                },
+                {
+                  "name": "Respondido",
+                  "value": "Respondido"
+                },
+                {
+                  "name": "Error IA",
+                  "value": "Error IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "833031b2-43ce-41d0-8286-afbc628175e0",
+      "name": "Ticket: Estado de Error",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        4256,
+        560
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "67b9199a-b42d-416d-80b6-c1465be7dce2",
+      "name": "Error No Controlado (Break)",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appIkxzSD9TzBvlFy",
+          "cachedResultName": "Ecosistema de Automatizacion IA"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblEpgq3vJtpwLUSL",
+          "cachedResultName": "Errores"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "value": {
+            "Descripcion": "=Fallo no controlado - ejecución {{ $json.execution.id }}",
+            "Tipo": "Otro",
+            "Nodo": "={{ $json.execution.lastNodeExecuted || 'Desconocido' }}",
+            "MensajeError": "={{ $json.execution.error?.message || 'Sin mensaje' }} | {{ $json.execution.url || '' }}",
+            "Workflow": "Entrega - Ecosistema de Automatización IA",
+            "Fecha": "={{ $now.toISO() }}",
+            "Resuelto": false
+          },
+          "schema": [
+            {
+              "id": "Descripcion",
+              "displayName": "Descripcion",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Tipo",
+              "id": "Tipo",
+              "options": [
+                {
+                  "name": "API IA",
+                  "value": "API IA"
+                },
+                {
+                  "name": "Datos Incompletos",
+                  "value": "Datos Incompletos"
+                },
+                {
+                  "name": "Envio",
+                  "value": "Envio"
+                },
+                {
+                  "name": "Otro",
+                  "value": "Otro"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "Nodo",
+              "displayName": "Nodo",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MensajeError",
+              "displayName": "MensajeError",
+              "type": "string",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Workflow",
+              "id": "Workflow",
+              "options": [
+                {
+                  "name": "Entrega - Ecosistema de Automatización IA",
+                  "value": "Entrega - Ecosistema de Automatización IA"
+                }
+              ],
+              "removed": false,
+              "required": false,
+              "type": "options"
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "type": "dateTime",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resuelto",
+              "displayName": "Resuelto",
+              "type": "boolean",
+              "required": false,
+              "display": true,
+              "removed": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "1330d111-4d1b-4791-a52d-227391686e2d",
+      "name": "Registrar Error Crítico",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        1072
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tbgemZvE1UfxG08d",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 1. Ingesta + Anti-bucle\nGmail Trigger solo trae mails **no leídos** de la bandeja que **no** vienen de la casilla de soporte. El Filter repite la regla (defensa en profundidad) y se busca el `GmailMessageID` en Airtable para no procesar dos veces el mismo mail.",
+        "height": 280,
+        "width": 880,
+        "color": 7
+      },
+      "id": "6be2f90f-cfe0-4fb1-9b69-eb6f1616cb14",
+      "name": "Nota 1 - Ingesta",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Cerebro (Airtable)\nSe vincula el ticket al cliente (relación `Tickets` ↔ `Clientes`), se crea en estado **Pendiente** y recién ahí se marca el mail como leído. Mails con menos de 15 caracteres (comparación número vs número) van a la ruta de error sin gastar tokens.",
+        "height": 280,
+        "width": 640,
+        "color": 4
+      },
+      "id": "9fc14d95-ac0f-4c4e-a877-5e3803ce4b05",
+      "name": "Nota 2 - Cerebro",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. Motor IA (Claude)\nPrompt dinámico con variables del cliente y del mail. `maxTokens: 600`, `temperature: 0.2`, reintento automático. La respuesta (`content[].text`) se parsea y valida contra las opciones de Airtable. Cualquier fallo sale por la salida de error (**Resume**).",
+        "height": 280,
+        "width": 640,
+        "color": 6
+      },
+      "id": "075f6a81-8a27-4550-b254-0ef641f6cc5f",
+      "name": "Nota 3 - Motor IA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 4. Human-in-the-loop\nEl flujo se **detiene** y envía el borrador al aprobador con botones Aprobar / Rechazar (espera máx. 24 h). Nada se envía al cliente sin aprobación: se evita el \"Efecto Metralleta\".",
+        "height": 280,
+        "width": 860,
+        "color": 3
+      },
+      "id": "d64703b0-682a-4a64-b319-76fbf0df3a8a",
+      "name": "Nota 4 - HITL",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 5. Voz (Gmail)\nLa respuesta se envía como **reply** al `messageId` original, así queda en el mismo hilo (Thread ID) del cliente. Cada paso actualiza el `Estado` del ticket.",
+        "height": 280,
+        "width": 700,
+        "color": 5
+      },
+      "id": "80d5138a-b336-4c9b-8caa-81d6b4aecb84",
+      "name": "Nota 5 - Voz",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3312,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 6. Resiliencia\nErrores controlados (**Resume**): se normalizan y se guardan en la tabla `Errores` vinculados al ticket. Errores no controlados (**Break**): el Error Trigger los registra igual.",
+        "height": 240,
+        "width": 620,
+        "color": 2
+      },
+      "id": "db66e42f-3f36-4f24-8464-b850ac0f9a0b",
+      "name": "Nota 6 - Resiliencia",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        896
+      ]
+    }
+  ],
+  "connections": {
+    "Nuevo Mail de Soporte": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Datos": {
+      "main": [
+        [
+          {
+            "node": "Anti-bucle: Excluir Casilla Propia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anti-bucle: Excluir Casilla Propia": {
+      "main": [
+        [
+          {
+            "node": "Buscar Ticket Existente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Ticket Existente": {
+      "main": [
+        [
+          {
+            "node": "¿Es Ticket Nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Ticket Nuevo?": {
+      "main": [
+        [
+          {
+            "node": "Buscar Cliente por Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar Leído (Duplicado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Cliente por Email": {
+      "main": [
+        [
+          {
+            "node": "Crear Ticket (Pendiente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Ticket (Pendiente)": {
+      "main": [
+        [
+          {
+            "node": "Marcar Mail como Leído",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Datos Completos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Datos Completos?": {
+      "main": [
+        [
+          {
+            "node": "Claude: Clasificar Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error: Datos Incompletos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Clasificar Ticket": {
+      "main": [
+        [
+          {
+            "node": "Parsear Respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error: API de IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Respuesta IA": {
+      "main": [
+        [
+          {
+            "node": "Ticket: Procesado por IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error: Respuesta IA Inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket: Procesado por IA": {
+      "main": [
+        [
+          {
+            "node": "¿Prioridad Alta? (≥ 4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Prioridad Alta? (≥ 4)": {
+      "main": [
+        [
+          {
+            "node": "Marcar Urgente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar Normal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Urgente": {
+      "main": [
+        [
+          {
+            "node": "Solicitar Aprobación Humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitar Aprobación Humana": {
+      "main": [
+        [
+          {
+            "node": "¿Aprobado por Humano?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Normal": {
+      "main": [
+        [
+          {
+            "node": "Solicitar Aprobación Humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error: Datos Incompletos": {
+      "main": [
+        [
+          {
+            "node": "Registrar Error en Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Error en Airtable": {
+      "main": [
+        [
+          {
+            "node": "Ticket: Estado de Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Aprobado por Humano?": {
+      "main": [
+        [
+          {
+            "node": "Ticket: Aprobado por Humano",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ticket: Rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket: Aprobado por Humano": {
+      "main": [
+        [
+          {
+            "node": "Responder al Cliente (mismo hilo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder al Cliente (mismo hilo)": {
+      "main": [
+        [
+          {
+            "node": "Ticket: Respondido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error: Envío Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error: API de IA": {
+      "main": [
+        [
+          {
+            "node": "Registrar Error en Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error: Respuesta IA Inválida": {
+      "main": [
+        [
+          {
+            "node": "Registrar Error en Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error: Envío Gmail": {
+      "main": [
+        [
+          {
+            "node": "Registrar Error en Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error No Controlado (Break)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Error Crítico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "active": false,
+  "meta": {},
+  "tags": []
+}

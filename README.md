@@ -27,7 +27,7 @@ El caso de uso es **Fennec**, una empresa ficticia de hosting web que recibe con
 ## Links
 
 - **Base de datos (solo lectura):** https://airtable.com/appIkxzSD9TzBvlFy/shrzlgDC5BSZL0f0s
-- **Video demo:** _(agregar link)_
+- **Video demo:** (https://youtu.be/xP0518C-ygM)
 
 ## Cómo funciona
 
